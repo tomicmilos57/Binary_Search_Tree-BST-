@@ -2,7 +2,9 @@
 #include "bintree.h"
 #include "stack.h"
 using namespace std;
-
+/************************************
+This is just test file for BST class
+************************************/
 int main(){
     cout <<"Application start..."<< endl;
     cout <<"Generating Example Binary Tree" << endl;
