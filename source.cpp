@@ -1,6 +1,6 @@
 #include<iostream>
-#include "bintree.h"
-#include "stack.h"
+#include "bintree.hpp"
+#include "stack.hpp"
 using namespace std;
 /************************************
 This is just test file for BST class

@@ -1,0 +1,4 @@
+*.exe
+stack.h 
+bintree.h 
+test.cpp
