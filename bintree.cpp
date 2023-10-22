@@ -7,13 +7,14 @@ using namespace std;
 
 //Constructor
 template <typename info>
-Node<info>::Node(info var, Node *father, Node *left, Node *right, int balance)
+Node<info>::Node(info var, Node *father, Node *left, Node *right, int height, int myheight)
 {
-	this->father = father;
-	this->left_son = left;
-	this->right_son = right;
-	this->var = var;
-    this->balance = balance;
+		this->father = father;
+		this->left_son = left;
+		this->right_son = right;
+		this->var = var;
+    	this->height = height;
+		this-> myheight = myheight;
 }
 
 template <typename info> 
@@ -140,23 +141,36 @@ template <typename info>
 void Node<info>::BST_append_elem(Node *elem)
 {
 	Node *root = this;
+    int height = 0;
 	while (1) {
+        height++;
 		if (root->get_info() > elem->get_info()) {
 			if (root->get_left_child() == nullptr) {
+                elem->myheight = height;
+                elem->height = height;
                 root->set_left_child(elem);
+	            for (Node *i = elem; i != nullptr; i = i->get_father()){
+                    if(i->height < height) i->height = height;
+                }
 				break;
 			} else {
 				root = root->get_left_child();
 			}
 		} else {
 			if (root->get_right_child() == nullptr) {
-				root->set_right_child(elem);
+                elem->myheight = height;
+                elem->height = height;
+                root->set_right_child(elem);
+	            for (Node *i = elem; i != nullptr; i = i->get_father()){
+                    if(i->height < height) i->height = height;
+                }
 				break;
 			} else {
 				root = root->get_right_child();
 			}
 		}
 	}
+    //return root_tree;
 }
 template<typename info>
 Node<info>* Node<info>::BST_search_by_value(Node* root, info value){
@@ -179,7 +193,8 @@ void Node<info>::delete_tree(Node* root){
 	for (Node *i = root; i != nullptr; stack.push(i), i = i->get_left_child());
 	while (!stack.empty()) {
 		Node *node = stack.pop();
-		for (Node *i = node->get_right_child(); i != nullptr;stack.push(i), i = i->get_left_child());
+		for (Node *i = node->get_right_child();
+                i != nullptr;stack.push(i), i = i->get_left_child());
         delete node;
     }
 }
@@ -202,19 +217,140 @@ info* Node<info>::diff(Node* elem1, Node* elem2){
     return array;
 }
 template<typename info>
-void Node<info>::AVL_append_elem(Node* elem){
-    this->BST_append_elem(elem);
-    Node* up = elem->father;
-    while(up != nullptr){
-        if(elem->is_left_child())
-            up->balance += 1;
-        else if(elem->is_right_child())
-            up->balance -= 1;
-
-        if(up->balance == 0) break;
-        elem = elem->father;
-        up = up->father;
+void Node<info>::calc_height(){
+	
+    if(!this->left_son->is_nullptr() && !this->right_son->is_nullptr()){
+        this->height = (this->left_son->height > this->right_son->height)? this->left_son->height : this->right_son->height;
+    }else if(this->left_son->is_nullptr() && this->right_son->is_nullptr()){
+        this->height = this->myheight;
+    }else if(this->left_son->is_nullptr()){
+        this->height = this->right_son->height;
+    }else if(this->right_son->is_nullptr()){
+        this->height = this->left_son->height;
     }
+
+}
+template<typename info>
+Node<info>* Node<info>::left_rotation(){
+    Node* x = this;
+    Node* y = this->right_son;
+    Node* temp = y->left_son;
+    y->left_son = x;
+    x->right_son = temp;
+    if(temp != nullptr)temp->father = x;
+
+    if(x->is_left_child())x->father->left_son = y;
+    if(x->is_right_child())x->father->right_son = y;
+    
+    if(!y->right_son->is_nullptr())y->right_son->myheight = y->myheight;
+    int xmyheight = x->myheight;
+    x->myheight = y->myheight;
+    y->myheight = xmyheight;
+
+	Node *xfather = x->father;
+	x->father = y;
+	y->father = xfather;
+    
+	x->calc_height();
+	if(!y->right_son->is_nullptr())y->right_son->calc_height();
+	y->calc_height();
+
+	for (Node *i = y->father; i != nullptr; i = i->father){
+        i->calc_height();
+    }
+    return y;
+}
+template<typename info>
+Node<info>* Node<info>::right_rotation(){
+    Node* x = this;
+    Node* y = this->left_son;
+    Node* temp = y->right_son;
+    y->right_son = x;
+    x->left_son = temp;
+    if(temp != nullptr)temp->father = x;
+
+    if(x->is_left_child())x->father->left_son = y;
+    if(x->is_right_child())x->father->right_son = y;
+
+    if(!y->left_son->is_nullptr())y->left_son->myheight = y->myheight;
+    int xmyheight = x->myheight;
+    x->myheight = y->myheight;
+    y->myheight = xmyheight;
+    //swap fathers
+	Node *xfather = x->father;
+	x->father = y;
+	y->father = xfather;
+
+	x->calc_height();
+	if(!y->left_son->is_nullptr())y->left_son->calc_height();
+	y->calc_height();
+
+	for (Node *i = y->father; i != nullptr; i = i->father){
+        i->calc_height();
+    }
+    return y;
+}
+template<typename info>
+int Node<info>::balance(){
+    if(!this->left_son->is_nullptr() && !this->right_son->is_nullptr()){
+        return this->left_son->height - this->right_son->height;
+    }else if(this->left_son->is_nullptr() && this->right_son->is_nullptr()){
+        return 0;
+    }else if(this->left_son->is_nullptr()){
+        return this->myheight - this->right_son->height;
+    }else if(this->right_son->is_nullptr()){
+        //cout << endl << "levi sin visina " << left_son->height << ", moja visina " << this->myheight << endl;
+        return this->left_son->height - this->myheight;
+    }
+
+    return 0;
+    //return (!this->left_son->is_nullptr()? this->left_son->height : 0 )- 
+    //    (!this->right_son->is_nullptr()? this->right_son->height : 0);
+}
+template<typename info>
+Node<info>* Node<info>::AVL_append_elem(Node* root, Node* elem){
+    root->BST_append_elem(elem);
+   
+    elem = elem->father;
+    while(elem != nullptr){
+        if(elem->balance() >= 2){
+            if(elem->left_son->balance() == 1) elem->right_rotation();
+            else if(elem->left_son->balance() == -1){
+                elem->left_son->left_rotation();
+                elem->right_rotation();
+            }else{
+                cout << "Unknown case" << endl;
+                exit(0);
+            }
+        }
+        else if(elem->balance() <= -2){
+            if(elem->right_son->balance() == -1)elem->left_rotation();
+            else if(elem->right_son->balance() == 1){
+                elem->right_son->right_rotation();
+                elem->left_rotation();
+            }else{
+                cout << "Unknown case" << endl;
+                exit(0);
+            }
+        }
+    elem = elem->father;
+    }
+        
+	for (; root->father != nullptr; root = root->father);
+    return root;
+}
+template<typename info>
+Node<info>* Node<info>::create_tree(info* arr, int n){
+    Node<info>* root = new Node<info>(arr[0]);    
+    for(int i = 1; i < n; i++){
+        Node<info>* elem = new Node<info>(arr[i]);
+        root = Node<info>::AVL_append_elem(root, elem);
+        Node<info>::tree_print(root);
+        cout << "_____________________" << endl;
+        Node<info>::balance_print(root);
+        cout << "_____________________" << endl;
+    }
+    return root;
 }
 //Returns 1 if tree is BST 
 template <typename info> 
@@ -273,6 +409,8 @@ void Node<info>::print_table(Node *node)
 		cout << "   ";
 	}
 	cout << node->get_info() << endl;
+	//cout << node->myheight << endl;
+	//cout << node->balance() << endl;
 }
 
 template <typename info> 
@@ -282,7 +420,7 @@ void Node<info>::print_balance(Node *node)
     for (int i = 0; i < tab; i++) {
 		cout << "   ";
 	}
-	cout << node->balance << endl;
+	cout << node->height << ", " << node->myheight << endl;
 }
 template <typename info>
 void Node<info>::set_right_child(Node *node)
