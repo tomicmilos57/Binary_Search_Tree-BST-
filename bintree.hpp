@@ -9,7 +9,7 @@ BST)...
 TODO
 ********************************************************************************/
 
-#include <cstdlib>
+
 #include <iostream>
 
 template <typename info> class Node {
@@ -17,7 +17,7 @@ template <typename info> class Node {
 
 	// Constructor
 	Node(info var = 0, Node *otac = nullptr, Node *left = nullptr,
-	     Node *right = nullptr, int height = 0, int myheight = 0);
+	     Node *right = nullptr, int height = 1);
 
 	Node *get_father();
 	Node *get_left_child();
@@ -26,13 +26,9 @@ template <typename info> class Node {
 	bool is_nullptr();
 	bool is_right_child();
 	bool is_left_child();
-	void calc_height();
-	static void swap_two_nodes(Node *x, Node *y);
 	static void tree_print(Node *root);
     static void balance_print(Node *root);
 	void BST_append_elem(Node *elem);
-	static bool BST_validate(Node *root);
-	static Node *search_by_value(Node *root, info value);
     static Node *BST_search_by_value(Node *root, info value);
     static void delete_tree(Node* root);
     static info* diff(Node* elem1, Node* elem2);
@@ -41,14 +37,17 @@ template <typename info> class Node {
     private:
 	info var;
     int height;
-    int myheight;
+    
 	Node *father;
 	Node *left_son;
 	Node *right_son;
+	
     
     Node* left_rotation();
     Node* right_rotation();
-	static int get_height(Node *node);
+	int get_height();
+	void update_height();
+	static int get_height_from_bottom(Node *node);
 	static void print_table(Node *node);
 	static void print_balance(Node *node);
 	void set_right_child(Node *node);
